@@ -10,6 +10,8 @@ public interface MembershipRepository extends JpaRepository<Membership, UUID> {
 
   List<Membership> findAllByOrganizationId(UUID organizationId);
 
+  List<Membership> findAllByOrganizationIdAndUserId(UUID organizationId, UUID userId);
+
   List<Membership> findAllByOrganizationIdAndWorkspaceId(UUID organizationId, UUID workspaceId);
 
   List<Membership> findAllByUserId(UUID userId);
