@@ -16,6 +16,18 @@ spring:
   flyway:
     enabled: true
 
+app:
+  auth:
+    jwt:
+      issuer: customer-support-hub
+      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+      access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT15M}
+      refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:P30D}
+    cookie:
+      refresh-token-name: ${JWT_REFRESH_COOKIE_NAME:customer_support_refresh}
+      secure: ${COOKIE_SECURE:false}
+      domain: ${COOKIE_DOMAIN:}
+
 management:
   endpoints:
     web:
