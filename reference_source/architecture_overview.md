@@ -2,15 +2,15 @@
 
 ## 1. Purpose
 
-Customer Support Hub là một backend Spring Boot cho bài toán support desk đa tenant.
-Mục tiêu của hệ thống là:
+Customer Support Hub is a Spring Boot backend for a multi-tenant support desk.
+The system is designed to:
 
-- xác thực người dùng bằng JWT
-- tách dữ liệu theo `organization` và `workspace`
-- quản lý customer requests, comments, attachments
-- có nền cho knowledge base, AI assistant, notifications và observability
+- authenticate users with JWT
+- separate data by `organization` and `workspace`
+- manage customer requests, comments, and attachments
+- provide a foundation for knowledge base, AI assistant, notifications, and observability
 
-Repo này đang đóng vai trò backend chính cho app JavaSpring.
+This repo is the backend core for the JavaSpring version of the app.
 
 ## 2. Tech Stack
 
@@ -23,59 +23,59 @@ Repo này đang đóng vai trò backend chính cho app JavaSpring.
 - Spring Data JPA
 - Flyway
 - PostgreSQL
-- H2 cho local/test
+- H2 for local/test
 
 ### Support libraries
 
-- JJWT cho access token
-- Spring Validation cho validate request
-- Spring Actuator cho health/metrics
-- WebSocket config đã có sẵn cho các flow realtime về sau
+- JJWT for access tokens
+- Spring Validation for request validation
+- Spring Actuator for health and metrics
+- WebSocket configuration is already available for future realtime flows
 
 ### Storage and infra
 
-- PostgreSQL: lưu data chính
-- Local filesystem: lưu attachment khi chạy local
-- Redis: đã có config nền cho các flow cần cache/rate limit
+- PostgreSQL: primary data store
+- Local filesystem: attachment storage in local development
+- Redis: already configured for future cache and rate-limit use cases
 
 ## 3. High-level Layers
 
-Code được chia theo từng domain:
+Code is organized by domain:
 
-- `auth`: register/login/refresh/logout/me
-- `organization`: company/org management
-- `workspace`: workspace within an org
+- `auth`: register, login, refresh, logout, me
+- `organization`: company and organization management
+- `workspace`: workspace within an organization
 - `membership`: role assignment and team management
 - `workflow`: customer request CRUD and audit events
 - `comment`: request comments
-- `attachment`: request file upload/download/delete
-- `knowledge`: placeholder module cho knowledge base
-- `notification`: placeholder module cho notifications
-- `ai`: placeholder module cho AI assistant
+- `attachment`: request file upload, download, and delete
+- `knowledge`: placeholder module for knowledge base
+- `notification`: placeholder module for notifications
+- `ai`: placeholder module for the AI assistant
 - `config`: security, OpenAPI, JPA auditing, Redis, WebSocket
-- `common`: exception, response, validator, util
+- `common`: exceptions, response handling, validators, utilities
 
 ### Why this structure
 
-Mỗi domain giữ đủ controller/service/repository/entity/dto ngay trong package của nó.
-Điều này giúp:
+Each domain keeps its controller, service, repository, entity, and DTO in one package.
+That makes it easier to:
 
-- dễ tìm code theo feature
-- dễ tách permission theo tenant
-- dễ viết test theo từng domain
-- tránh “god module” chứa mọi thứ
+- find code by feature
+- isolate tenant permissions
+- write domain-focused tests
+- avoid a single god module
 
 ## 4. Request Pipeline
 
-Luồng request chung:
+Typical request flow:
 
-1. Client gọi API
-2. `JwtAuthenticationFilter` đọc `Authorization: Bearer <token>`
-3. Token hợp lệ thì tạo `AuthenticatedUser`
-4. Controller lấy `currentUserId` từ `Authentication`
-5. Service kiểm tra tenant/role rồi xử lý business
-6. Repository đọc/ghi database
-7. Response trả về controller
+1. Client calls the API
+2. `JwtAuthenticationFilter` reads `Authorization: Bearer <token>`
+3. A valid token creates `AuthenticatedUser`
+4. Controller reads `currentUserId` from `Authentication`
+5. Service checks tenant and role rules
+6. Repository reads or writes the database
+7. Controller returns the response
 
 ```mermaid
 flowchart LR
@@ -100,20 +100,21 @@ flowchart LR
 
 ### Token strategy
 
-- access token: nằm trong `Authorization` header
-- refresh token: nằm trong HTTP-only cookie
-- logout: revoke refresh session và clear cookie
+- access token: `Authorization` header
+- refresh token: HTTP-only cookie
+- logout: revoke the refresh session and clear the cookie
 
 ### Why this design
 
-- access token ngắn hạn để giảm rủi ro
-- refresh cookie HTTP-only để frontend không phải tự quản lý refresh token bằng JS
-- dễ support SPA và giảm exposure của token trên browser
+- short-lived access token reduces risk
+- HTTP-only refresh cookie keeps refresh token out of browser JS
+- good fit for SPA usage
+- lower exposure in the browser
 
 ## 6. Tenant Model
 
-Tenant scope của hệ thống không chỉ là `user`.
-Scope chính là:
+The tenant scope is not just the `user`.
+The real scope is:
 
 - `organization`
 - `workspace`
@@ -121,28 +122,28 @@ Scope chính là:
 ### Core tables
 
 - `users`
-- `refresh_sessions`
+- `sessions`
 - `organizations`
 - `workspaces`
 - `memberships`
 
 ### Isolation rule
 
-Mọi resource business đều phải đi qua organization context.
-Service layer luôn check:
+Every business resource must be checked in the organization context.
+The service layer always verifies:
 
-- user có access organization hay không
-- user có role phù hợp hay không
-- resource có thuộc đúng org/workspace không
+- whether the user has access to the organization
+- whether the user has the right role
+- whether the resource belongs to the correct org/workspace
 
 ### Why this matters
 
-Nếu không check ở service layer, user có thể đọc chéo tenant bằng cách đoán ID.
-Backend này chọn “server-enforced tenant isolation” thay vì chỉ dựa vào UI ẩn nút.
+If the service layer does not check tenant scope, a user could read another tenant's data by guessing an ID.
+This backend uses server-enforced tenant isolation instead of relying only on the UI.
 
 ## 7. Workflow Domain
 
-Workflow item là customer request.
+Workflow item = customer request.
 
 ### Main endpoints
 
@@ -162,15 +163,15 @@ Workflow item là customer request.
 - due date
 - audit events
 
-### Why event table exists
+### Why the event table exists
 
-`workflow_events` giữ lịch sử trạng thái thay đổi.
-Điều này giúp:
+`workflow_events` stores the request history.
+That helps with:
 
 - audit trail
 - debugging
 - future notification logic
-- future AI summaries / timeline
+- future AI summaries and timelines
 
 ## 8. Comment and Attachment Domains
 
@@ -195,39 +196,40 @@ Endpoints:
 ### Storage strategy
 
 - metadata: PostgreSQL
-- file content: local filesystem khi chạy local
-- later có thể đổi sang GCS / S3 style storage mà không đổi API contract nhiều
+- file bytes: local filesystem in local development
+- later this can move to GCS or an S3-like storage backend without changing the API contract much
 
 ## 9. Knowledge / AI / Notification Modules
 
 ### Knowledge
 
-`knowledge` là module cho workspace knowledge base.
-Hiện tại module này đang là placeholder để sau này:
+`knowledge` is the workspace knowledge base module.
+It is currently a placeholder for future work such as:
 
-- upload markdown
-- chunk content
-- index embeddings
-- search/citation
+- markdown upload
+- chunking
+- embeddings and indexing
+- search and citation
 
 ### AI
 
-`ai` là module cho assistant/chatbot.
-Nó chuẩn bị cho:
+`ai` is the assistant/chatbot module.
+It is prepared for:
 
 - function calling
 - tool registry
 - tenant-scoped actions
-- summarization / routing / request lookup
+- summarization and routing
 
 ### Notification
 
-`notification` là module cho event-driven updates.
-Hướng đi tương lai:
+`notification` is the event-driven update module.
+Future direction:
 
 - request updated
 - comment added
-- mention / invite / due soon
+- mention or invite
+- due soon
 
 ## 10. Configuration and Cross-cutting Concerns
 
@@ -235,44 +237,49 @@ Hướng đi tương lai:
 
 - stateless session
 - JWT filter
-- route whitelist cho auth/health/docs
+- route whitelist for auth, health, and docs
 
-### OpenAPI
+### Swagger/OpenAPI
 
-- Swagger/OpenAPI config đã bật sẵn để khám phá API
+- Swagger/OpenAPI config is enabled for API discovery
+- helpful for frontend integration and interviews
 
 ### JPA auditing
 
-- tự gắn createdAt/updatedAt ở entity
+- entities auto-fill `createdAt` and `updatedAt`
 
 ### Validation
 
-- DTO request dùng Bean Validation
-- giảm risk nhận payload rỗng hoặc sai format
+- request DTOs use Bean Validation
+- reduces the risk of empty or malformed payloads
 
-## 11. Current Runtime Notes
+### Local setup
+
+- local DB can use H2 if env vars are not set
+- local attachments are stored in `./data/attachments`
+- `data/` is ignored by git
+
+## 11. Deployment direction
 
 ### Local
 
-- DB local dùng H2 mặc định nếu chưa set env
-- attachment local lưu vào `./data/attachments`
-- `data/` đã được ignore để không dính vào git
+- H2 for local fallback
+- PostgreSQL for the real Docker Compose setup
+- attachments stored locally
 
-### Production path
+### Future production
 
-- PostgreSQL thật
-- attachment storage có thể nâng lên GCS
-- Redis cho cache/rate limit
-- observability qua Actuator / metrics / logs / dashboard
+- PostgreSQL in managed infrastructure
+- attachment storage moved to GCS or another object store
 
-## 12. Interview Cheatsheet
+## 12. Interview summary
 
-Nếu bị hỏi “tại sao kiến trúc này”:
+If someone asks "why this architecture?", the short answer is:
 
-- package-by-domain giúp tách responsibility rõ
-- JWT stateless phù hợp API/SPA
-- refresh cookie HTTP-only giảm exposure của refresh token
-- organization/workspace/membership tạo multi-tenant isolation
-- workflow events giúp audit và future automation
-- attachment metadata tách khỏi file storage để dễ đổi storage backend
+- package-by-domain keeps responsibilities clear
+- JWT stateless auth works well for API and SPA usage
+- HTTP-only refresh cookie reduces refresh token exposure
+- organization/workspace/membership creates multi-tenant isolation
+- workflow events provide audit and future automation
+- attachment metadata is separated from file storage so the storage backend can change later
 

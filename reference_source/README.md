@@ -7,10 +7,10 @@ This folder is the interview-ready reference pack for the Java Spring version of
 - [`project_overview.md`](./project_overview.md) - high-level summary of the whole system
 - [`database_schema.md`](./database_schema.md) - table-by-table schema and relationships
 - [`api_design.md`](./api_design.md) - endpoint-by-endpoint API explanation
-- [`frontend_architecture.md`](./frontend_architecture.md) - intended FE architecture and UI state
-- [`deployment.md`](./deployment.md) - Docker, DB, storage, and production direction
+- [`frontend_architecture.md`](./frontend_architecture.md) - intended frontend architecture and UI state
+- [`deployment.md`](./deployment.md) - Docker, database, storage, and production direction
 - [`architecture_overview.md`](./architecture_overview.md) - backend architecture summary
-- [`business_flow_and_api.md`](./business_flow_and_api.md) - business flow + API map
+- [`business_flow_and_api.md`](./business_flow_and_api.md) - business flow and API map
 
 ## Recommended reading order
 
@@ -24,11 +24,11 @@ This folder is the interview-ready reference pack for the Java Spring version of
 
 Use these docs to answer questions like:
 
-- system này làm gì
-- data model ra sao
-- API nào phục vụ flow nào
-- frontend nên tổ chức thế nào
-- deploy local / production đi theo hướng nào
+- what the system does
+- what the data model looks like
+- which API supports which flow
+- how the frontend should be organized
+- how local and production deployment should work
 
 ## Status
 

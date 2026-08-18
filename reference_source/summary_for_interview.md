@@ -2,17 +2,17 @@
 
 ## One-line pitch
 
-`customer-support` là backend Java Spring cho một support desk đa tenant, nơi company quản lý request, team, knowledge, notifications, attachments, và AI assistant có tenant isolation.
+`customer-support` is a Java Spring backend for a multi-tenant support desk where a company manages requests, team members, knowledge, notifications, attachments, and an AI assistant with tenant isolation.
 
 ## What the system does
 
-- xác thực user bằng JWT + refresh cookie
-- tách dữ liệu theo organization / workspace
-- quản lý customer requests theo workflow
-- hỗ trợ comments và attachments theo request
-- quản lý team member / role
-- hỗ trợ knowledge base để AI trả lời có citation
-- chuẩn bị notification và assistant panel
+- authenticates users with JWT plus a refresh cookie
+- separates data by organization and workspace
+- manages customer requests through a workflow
+- supports comments and attachments on each request
+- manages team members and roles
+- supports a knowledge base so AI can answer with citations
+- prepares notification and assistant panels
 
 ## Core tech
 
@@ -22,33 +22,33 @@
 - Spring Data JPA
 - Flyway
 - PostgreSQL
-- Docker / Docker Compose
+- Docker and Docker Compose
 
 ## Important architecture ideas
 
 ### Auth
 
-- access token đi trong `Authorization`
-- refresh token đi trong HTTP-only cookie
+- access token goes in the `Authorization` header
+- refresh token goes in an HTTP-only cookie
 
 ### Multi-tenant
 
-- `organization` là tenant root
-- `workspace` là tenant slice
-- mọi query business đều phải check org/workspace scope
+- `organization` is the tenant root
+- `workspace` is the tenant slice
+- every business query must check organization and workspace scope
 
 ### Workflow
 
-- `workflow_items` là request chính
-- `workflow_events` lưu history/audit trail
-- `comments` và `attachments` gắn vào request
+- `workflow_items` is the main request table
+- `workflow_events` stores history and audit trail
+- `comments` and `attachments` belong to each request
 
-### Knowledge / AI
+### Knowledge and AI
 
-- markdown document được upload
-- document được chunk
-- chunk được index để assistant truy hồi
-- assistant chỉ được dùng tool đã cho phép
+- markdown documents are uploaded
+- documents are chunked
+- chunks are indexed for retrieval
+- the assistant can only use approved tools
 
 ## Tables to remember
 
@@ -68,26 +68,33 @@
 - `agent_messages`
 - `agent_memory_items`
 
-## API to remember
+## APIs to remember
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
-- `GET/POST /api/organizations`
-- `GET/POST /api/organizations/{orgSlug}/workspaces`
-- `GET/POST/PATCH/DELETE /api/organizations/{orgSlug}/workflow-items`
-- `GET/POST/PATCH/DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments`
-- `GET/POST/DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments`
+- `GET /api/organizations`
+- `POST /api/organizations`
+- `GET /api/organizations/{orgSlug}/workspaces`
+- `POST /api/organizations/{orgSlug}/workspaces`
+- `GET /api/organizations/{orgSlug}/workflow-items`
+- `POST /api/organizations/{orgSlug}/workflow-items`
+- `PATCH /api/organizations/{orgSlug}/workflow-items/{workflowItemId}`
+- `DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}`
+- `GET /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments`
+- `POST /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments`
+- `GET /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments`
+- `POST /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments`
 
 ## Deployment summary
 
-- local run bằng Docker Compose
-- PostgreSQL là DB chính
-- attachments lưu local filesystem trong dev
-- Flyway quản lý schema
-- production nên dùng managed DB + object storage + HTTPS + secrets manager
+- local runs with Docker Compose
+- PostgreSQL is the main database
+- attachments are stored on the local filesystem in development
+- Flyway manages schema migrations
+- production should use managed DB, object storage, HTTPS, and a secrets manager
 
 ## Folder docs
 

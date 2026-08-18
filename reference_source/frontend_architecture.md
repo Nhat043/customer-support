@@ -1,26 +1,27 @@
 # Frontend Architecture
 
-Tài liệu này mô tả kiến trúc frontend nên dùng cho `customer-support` khi ghép với backend JavaSpring hiện tại.
+This document describes the frontend architecture that should be used for `customer-support` when it is paired with the current Java Spring backend.
 
 ## Important context
 
-Repo hiện tại **chưa chứa frontend source code**, nên đây là tài liệu kiến trúc mục tiêu để:
+This repo does **not** currently contain frontend source code.
+This document is a target architecture so that it can be used to:
 
-- giải thích frontend phải làm gì
-- map rõ UI flow với backend API
-- dùng làm note phỏng vấn
-- làm nền để sau này scaffold frontend thật
+- explain what the frontend needs to do
+- map UI flows to backend APIs
+- prepare interview notes
+- serve as the blueprint for a future frontend scaffold
 
 ## 1. Frontend responsibilities
 
-Frontend của Customer Support Hub không chỉ là “render UI”.
-Nó phải làm 5 việc chính:
+The Customer Support Hub frontend is not only responsible for rendering UI.
+It must do five main things:
 
-1. xác thực người dùng
-2. giữ tenant context theo organization/workspace
-3. hiển thị request / comment / attachment / team / knowledge / notification
-4. mở assistant panel và gọi các tool do backend cho phép
-5. đồng bộ trạng thái UI sau khi tạo, cập nhật, xóa dữ liệu
+1. authenticate users
+2. keep tenant context by organization and workspace
+3. show requests, comments, attachments, team, knowledge, and notifications
+4. open the assistant panel and call only approved backend tools
+5. keep UI state in sync after create, update, and delete actions
 
 ## 2. Recommended stack
 
@@ -30,49 +31,49 @@ Nó phải làm 5 việc chính:
 - **TypeScript**
 - **Tailwind CSS**
 - **React Server Components + Client Components**
-- **TanStack Query** cho server state
-- **Zustand** hoặc React Context cho UI state nhỏ
-- **Fetch wrapper** hoặc `ky`/`axios` cho API client
+- **TanStack Query** for server state
+- **Zustand** or React Context for small UI state
+- **Fetch wrapper** or `ky`/`axios` for API access
 
 ### Why this stack
 
 #### Next.js App Router
 
-- route-based layout rõ ràng
-- hợp với dashboard nhiều page
-- dễ chia `auth`, `org`, `workspace`, `settings`
-- phù hợp SSR/CSR mix
+- clear route-based layout structure
+- a good fit for dashboard-heavy apps
+- easy to split `auth`, `org`, `workspace`, and `settings`
+- works well with SSR and CSR together
 
 #### TypeScript
 
-- type-safe request/response từ backend DTO
-- giảm lỗi khi đổi status, role, payload
+- type-safe request and response handling
+- fewer bugs when status, role, or payload shapes change
 
 #### Tailwind CSS
 
-- build UI dashboard nhanh
-- dễ tạo theme nhất quán
-- phù hợp component-based enterprise UI
+- fast dashboard UI development
+- easy theme consistency
+- a good fit for component-based enterprise UI
 
 #### TanStack Query
 
-- cache server data
-- refetch sau mutation
-- đồng bộ dashboard / detail / assistant / notification badge
+- caches server state
+- refetches after mutations
+- keeps dashboard, detail view, assistant, and notification badge in sync
 
 #### Zustand / Context
 
-- chỉ dùng cho UI state:
-  - sidebar open/close
-  - selected organization/workspace
-  - assistant panel open/close
+- only for UI state such as:
+  - sidebar open or closed
+  - selected organization or workspace
+  - assistant panel open or closed
   - active tab
 
-Không nên dùng Redux cho mọi thứ nếu project chưa thật sự phức tạp.
+Redux is not necessary unless the project becomes much more complex.
 
 ## 3. Frontend folder structure
 
-Nếu làm frontend thật, cấu trúc nên kiểu này:
+If the frontend is implemented for real, the structure should look like this:
 
 ```text
 apps/web
@@ -135,34 +136,34 @@ apps/web
 - `/orgs/[orgSlug]/team`  
   Members and roles
 - `/orgs/[orgSlug]/knowledge`  
-  Knowledge base upload / source list
+  Knowledge base upload and source list
 - `/orgs/[orgSlug]/notifications`  
   Notification inbox
 - `/orgs/[orgSlug]/settings`  
-  Profile / password / workspace settings
+  Profile, password, and workspace settings
 
 ## 5. Layout strategy
 
 The frontend should use a nested layout structure:
 
 1. **Public layout**
-   - login/register/landing
+   - login, register, and landing pages
 2. **Authenticated app shell**
    - top header
-   - org/workspace selector
-   - left/center content
+   - organization and workspace selector
+   - main content
    - optional assistant drawer on the right
 3. **Page-specific layout**
-   - workflow list/detail
+   - workflow list and detail
    - team
    - knowledge
    - settings
 
 ### Why this matters
 
-- keeps header/sidebar consistent
-- assistant drawer can persist across pages
-- UI state does not reset on every navigation
+- keeps header and navigation consistent
+- allows the assistant drawer to stay open across pages
+- prevents UI state from resetting on each navigation
 
 ## 6. Authentication architecture
 
@@ -170,17 +171,17 @@ The frontend should use a nested layout structure:
 
 Frontend should treat auth like this:
 
-- backend returns access token in response body
-- backend sets refresh token in HTTP-only cookie
-- frontend stores access token in memory or safe client storage
-- frontend calls `/api/auth/refresh` when token expires
+- backend returns an access token in the response body
+- backend sets a refresh token in an HTTP-only cookie
+- frontend stores the access token in memory or other safe client storage
+- frontend calls `/api/auth/refresh` when the token expires
 
 ### Practical flow
 
 1. user logs in
-2. frontend saves access token
-3. frontend calls authenticated APIs with `Authorization` header
-4. if request returns `401`, frontend refreshes token once
+2. frontend saves the access token
+3. frontend calls authenticated APIs with the `Authorization` header
+4. if a request returns `401`, frontend refreshes the token once
 5. if refresh fails, redirect to `/login`
 
 ### UI states needed
@@ -202,14 +203,14 @@ The frontend must always know:
 
 ### Tenant context source
 
-- organization comes from route: `/orgs/[orgSlug]`
-- workspace usually comes from selected dropdown or route query
-- role comes from `/api/auth/me` + organization/membership data
+- organization comes from the route: `/orgs/[orgSlug]`
+- workspace usually comes from a selected dropdown or route query
+- role comes from `/api/auth/me` plus organization membership data
 
 ### Why this matters
 
-The UI can hide buttons, but backend still enforces security.
-Frontend tenant context is for:
+The UI can hide buttons, but the backend still enforces security.
+Frontend tenant context is used for:
 
 - request filtering
 - routing
@@ -234,80 +235,80 @@ Server state includes:
 
 ### Recommended patterns
 
-- `useQuery` for list/detail loading
-- `useMutation` for create/update/delete
+- `useQuery` for list and detail loading
+- `useMutation` for create, update, and delete
 - invalidate related queries after mutation
-- optimistic update only for simple UI actions
+- use optimistic updates only for simple UI actions
 
 ### Example invalidation logic
 
-- create request -> invalidate request list + dashboard summary + notification badge
-- update request -> invalidate request detail + list + events
+- create request -> invalidate request list, dashboard summary, and notification badge
+- update request -> invalidate request detail, list, and events
 - delete attachment -> invalidate request detail attachment list
-- add member -> invalidate team page + org detail
+- add member -> invalidate team page and organization detail
 
 ## 9. UI state model
 
 Use a small store for UI-only concerns:
 
-- assistant drawer open/close
+- assistant drawer open or closed
 - active tab highlight
 - selected workspace
 - selected organization
 - notification badge count
-- mobile sidebar open/close
+- mobile sidebar open or closed
 
 Do **not** put everything in global state.
-Database-backed data should stay in query cache.
+Database-backed data should stay in the query cache.
 
 ## 10. Assistant panel architecture
 
-The AI assistant is not a separate app page in production.
+The AI assistant is not a separate page in production.
 It should be a **right-side drawer** that can open from any authenticated page.
 
-### Assistant UI roles
+### Assistant UI responsibilities
 
 - show conversation history
-- show “new chat” button
+- show a "new chat" button
 - show available tool hints
-- show citations / sources
+- show citations or sources
 - show current run status
 
 ### Assistant behavior
 
-- can create/update workflow items only through approved backend tools
+- can create or update workflow items only through approved backend tools
 - should never generate raw SQL
 - should not bypass tenant scope
-- should keep conversation per user and per tenant
+- should keep conversation state per user and per tenant
 
 ### Frontend implication
 
 - assistant drawer state should persist across route changes
-- if drawer is open and user navigates to another page, it should remain open
-- navigation should not reset the conversation unless user clicks “New chat”
+- if the drawer is open and the user navigates to another page, it should remain open
+- navigation should not reset the conversation unless the user clicks "New chat"
 
 ## 11. Knowledge base page
 
-The knowledge page is for workspace-owned support docs.
+The knowledge page is for workspace-owned support documents.
 
 ### Core actions
 
 - upload markdown
 - list source documents
 - show indexed status
-- show chunks/source preview
+- show chunk or source preview
 - retry failed indexing
 - delete a document
 
 ### UX rule
 
 - show file-level summary first
-- hide chunk details behind source preview / expand
-- do not overwhelm user with raw chunks by default
+- hide chunk details behind a source preview or expand action
+- do not overwhelm the user with raw chunks by default
 
 ### Data source
 
-- `GET/POST` future knowledge APIs
+- future knowledge APIs
 - backend schema already reserves:
   - `knowledge_documents`
   - `knowledge_chunks`
@@ -332,24 +333,24 @@ The knowledge page is for workspace-owned support docs.
 
 ### Refresh strategy
 
-After mutation, page should refetch data or invalidate query:
+After a mutation, the page should refetch or invalidate data:
 
 - create request
 - update request
 - delete request
 - add comment
-- upload/delete attachment
+- upload or delete attachment
 
 This is important because the same request can be visible in:
 
 - dashboard
 - queue page
 - detail page
-- assistant source result
+- assistant source results
 
 ## 13. Notification architecture
 
-The notification tab should show event-driven updates like:
+The notifications tab should show event-driven updates such as:
 
 - request created
 - request status changed
@@ -359,14 +360,14 @@ The notification tab should show event-driven updates like:
 
 ### UX rule
 
-- show badge or `!` on the tab when unread notifications exist
-- clear badge when notifications are read
+- show a badge or `!` on the tab when unread notifications exist
+- clear the badge when notifications are read
 
 ### Frontend data pattern
 
-- query unread count on shell load
-- keep badge in UI store
-- refetch after mutation or periodic poll
+- query the unread count when the shell loads
+- keep the badge in UI state
+- refetch after mutation or on a periodic poll
 
 ## 14. Role-aware rendering
 
@@ -382,27 +383,25 @@ The frontend should render based on role:
   - manage workflow
   - manage knowledge
 - **Member**
-  - create/update requests
+  - create or update requests
   - comment
   - attach files
 - **Viewer**
   - read-only
 
-### Important
-
 This is only UI behavior.
-Backend must still enforce the same rules.
+The backend must still enforce the same rules.
 
 ## 15. API client layer
 
-Create a single client wrapper so all pages use the same auth logic.
+Create one client wrapper so all pages use the same auth logic.
 
 ### Client responsibilities
 
-- attach access token
-- include credentials for refresh cookie
+- attach the access token
+- include credentials for the refresh cookie
 - normalize errors
-- handle `401` with one retry refresh
+- handle `401` with a single retry refresh
 - parse structured error responses
 
 ### Why a wrapper matters
@@ -451,9 +450,9 @@ If every page calls `fetch` directly, auth refresh and error handling become inc
 These should not reset during normal navigation:
 
 - auth session
-- active organization/workspace
+- active organization and workspace
 - assistant drawer state
-- active query cache
+- query cache
 - notification badge count
 
 ## 18. What should reset on route change
@@ -468,23 +467,23 @@ These can change per page:
 
 ## 19. Interview explanation
 
-If someone asks “what is the frontend architecture?”, the clean answer is:
+If someone asks "what is the frontend architecture?", the clean answer is:
 
 1. Next.js App Router provides route and layout structure.
-2. Tailwind handles dashboard UI styling.
+2. Tailwind handles dashboard styling.
 3. TanStack Query handles backend state and cache invalidation.
-4. Small UI store handles shell state like drawer and active workspace.
-5. Auth uses access token + refresh cookie.
-6. Every authenticated page is tenant-aware through organization/workspace route context.
+4. A small UI store handles shell state such as drawer and active workspace.
+5. Auth uses an access token plus a refresh cookie.
+6. Every authenticated page is tenant-aware through organization and workspace route context.
 7. Assistant, workflow, knowledge, and notifications all share the same shell and tenant scope.
 
 ## 20. Current status
 
-This frontend architecture is **planned**, not yet implemented in this JavaSpring repo.
+This frontend architecture is planned, not yet implemented in this JavaSpring repo.
 
 The backend already supports the business model, so this document can be used as the blueprint for:
 
 - building a real frontend later
 - explaining the system in interviews
-- making sure UI and API stay aligned
+- keeping UI and API aligned
 

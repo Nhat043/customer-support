@@ -2,62 +2,62 @@
 
 ## 1. Product Story
 
-Customer Support Hub là một support desk đa tenant.
-Một company/organization sẽ có:
+Customer Support Hub is a multi-tenant support desk.
+Each company or organization has:
 
 - owner
 - admin
 - member
 - viewer
 
-Mỗi organization có thể có nhiều workspace, và workflow items được quản lý theo org/workspace scope.
+An organization can have multiple workspaces, and workflow items are managed within an organization/workspace scope.
 
 ## 2. Main Business Flow
 
 ### Flow A: Register and Login
 
-1. User đăng ký hoặc login
-2. Backend tạo access token
-3. Backend set refresh token trong HTTP-only cookie
-4. Client dùng access token để gọi API tiếp
-5. Khi access token hết hạn thì gọi refresh
+1. A user registers or logs in
+2. The backend creates an access token
+3. The backend sets a refresh token in an HTTP-only cookie
+4. The client uses the access token for subsequent API calls
+5. When the access token expires, the client calls refresh
 
 ### Flow B: Create Organization
 
-1. Owner tạo organization
-2. System tự tạo workspace mặc định `General`
-3. System tạo membership owner
-4. User vào dashboard của organization đó
+1. The owner creates an organization
+2. The system automatically creates the default `General` workspace
+3. The system creates the owner membership
+4. The user enters the dashboard for that organization
 
 ### Flow C: Invite Team Members
 
-1. Owner/Admin mở trang team
-2. Nhập email + role
-3. Backend tạo membership/invitation logic theo org
-4. Người được mời join vào workspace/company
+1. Owner or admin opens the team page
+2. Enters email and role
+3. The backend creates membership or invitation logic for the organization
+4. The invited user joins the workspace or company
 
 ### Flow D: Create and Manage Customer Requests
 
-1. Member/Admin/Owner tạo workflow item
-2. Item đi vào đúng organization/workspace
-3. Người có quyền update status/priority/assignee
-4. Comments và attachments bám vào đúng request
-5. Audit event được lưu cho create/update/delete
+1. Member, admin, or owner creates a workflow item
+2. The item belongs to the correct organization and workspace
+3. Authorized users update status, priority, or assignee
+4. Comments and attachments are linked to the request
+5. Audit events are stored for create, update, and delete actions
 
 ### Flow E: Knowledge Base
 
-1. Owner/Admin upload markdown document
-2. Document được chia chunk
-3. Chunk được index
-4. AI assistant tìm source liên quan rồi trả lời có citation
+1. Owner or admin uploads a markdown document
+2. The document is split into chunks
+3. The chunks are indexed
+4. The AI assistant finds the relevant source and answers with citation
 
 ### Flow F: AI Assistant
 
-1. User mở assistant panel
-2. User hỏi về request/queue/knowledge
-3. AI chọn tool phù hợp
-4. Tool chỉ được phép chạm vào data trong tenant hiện tại
-5. Nếu cần, AI trả lời kèm source hoặc navigate action
+1. A user opens the assistant panel
+2. The user asks about requests, queue state, or knowledge
+3. The AI selects the right tool
+4. The tool can only access data in the current tenant
+5. If needed, the AI returns a source citation or a navigation action
 
 ## 3. API Map
 
@@ -120,20 +120,20 @@ Mỗi organization có thể có nhiều workspace, và workflow items được 
 
 ### Owner
 
-- full company/workspace control
-- manage team
-- manage workflow
-- manage knowledge
+- full company and workspace control
+- team management
+- workflow management
+- knowledge management
 
 ### Admin
 
-- manage team member/viewer
+- manage team members and viewers
 - manage requests
 - manage knowledge
 
 ### Member
 
-- create/update requests
+- create and update requests
 - comment
 - upload attachments
 - view knowledge depending on rules
@@ -141,7 +141,7 @@ Mỗi organization có thể có nhiều workspace, và workflow items được 
 ### Viewer
 
 - read-only
-- cannot mutate requests/comments/attachments
+- cannot mutate requests, comments, or attachments
 
 ## 5. Request Lifecycle
 
@@ -157,65 +157,65 @@ flowchart TD
 
 ### Meaning of status
 
-- `NEW`: vừa tạo
-- `TRIAGE` / `NEEDS_REVIEW`: cần phân loại
-- `IN_PROGRESS`: đang xử lý
-- `WAITING_FOR_CUSTOMER`: chờ khách phản hồi
-- `RESOLVED`: đã xong nhưng có thể chờ confirm
-- `CLOSED`: đóng hẳn
+- `NEW`: just created
+- `TRIAGE` or `NEEDS_REVIEW`: needs classification
+- `IN_PROGRESS`: currently being handled
+- `WAITING_FOR_CUSTOMER`: waiting for the customer to respond
+- `RESOLVED`: completed but may still wait for confirmation
+- `CLOSED`: fully closed
 
 ## 6. Permission Rules That Matter
 
 ### Tenant isolation
 
-- user chỉ thấy organization mà họ có access
-- request/comment/attachment luôn check theo `orgSlug` + resource id
-- không dựa vào UI để bảo mật
+- users can only see organizations they have access to
+- requests, comments, and attachments are always checked using `orgSlug` plus resource ID
+- security is not based on UI hiding alone
 
 ### Write permissions
 
-- owner/admin/member có thể mutate workflow/comment/attachment
-- viewer không được mutate
+- owner, admin, and member can mutate workflow, comment, and attachment data
+- viewer cannot mutate
 
 ### Assignee rules
 
-- assignee phải tồn tại
-- assignee phải thuộc đúng organization
+- assignee must exist
+- assignee must belong to the correct organization
 
 ## 7. Data Flow by Feature
 
 ### Create request
 
-1. UI gửi `POST /workflow-items`
-2. Backend resolve organization
-3. Backend resolve workspace `general` nếu không truyền
-4. Backend validate permission
-5. Backend lưu request
-6. Backend ghi event `CREATED`
+1. UI sends `POST /workflow-items`
+2. Backend resolves the organization
+3. Backend resolves the `general` workspace if none is provided
+4. Backend validates permissions
+5. Backend saves the request
+6. Backend writes a `CREATED` event
 
 ### Update request
 
-1. UI gửi `PATCH /workflow-items/{id}`
-2. Backend load request theo org
-3. Backend snapshot before/after
-4. Backend update field hợp lệ
-5. Backend validate assignee nếu có
-6. Backend ghi event `UPDATED`
+1. UI sends `PATCH /workflow-items/{id}`
+2. Backend loads the request within the organization
+3. Backend snapshots before and after values
+4. Backend updates allowed fields
+5. Backend validates assignee if present
+6. Backend writes an `UPDATED` event
 
 ### Comment
 
-1. UI gửi comment
-2. Backend resolve đúng request trong đúng org
-3. Backend validate write access
-4. Backend save comment
+1. UI sends a comment
+2. Backend resolves the correct request within the correct organization
+3. Backend validates write access
+4. Backend saves the comment
 
 ### Attachment
 
-1. UI chọn file
-2. Backend validate size/type
-3. File content lưu local filesystem
-4. Metadata lưu DB
-5. Download trả đúng filename/content-type
+1. UI selects a file
+2. Backend validates file size and type
+3. File content is stored in the local filesystem
+4. Metadata is stored in the database
+5. Download returns the correct file name and content type
 
 ## 8. Where the code lives
 
@@ -246,40 +246,39 @@ flowchart TD
 
 ### Knowledge
 
-Hiện `knowledge` mới là module shell.
-Khi làm tiếp, nó sẽ cần:
+`knowledge` is currently only a shell module.
+Future work will need:
 
 - document upload
 - chunking
-- embeddings/index
+- embeddings and indexing
 - source citation
 
 ### AI
 
-Hiện `ai` mới là shell.
-Khi làm tiếp, nó sẽ cần:
+`ai` is currently only a shell module.
+Future work will need:
 
-- tool calling
-- route hỏi đáp
-- tenant-safe data access
-- prompt injection guardrails
+- tool routing
+- request lookup
+- tenant-safe function calling
 
-### Notifications
+### Notification
 
-Hiện `notification` cũng mới là shell.
-Khi làm tiếp, nó sẽ cần:
+`notification` is currently only a shell module.
+Future work will need:
 
-- event on request/comment/member actions
-- unread/read state
-- UI badge / panel
+- request status updates
+- mention or invite events
+- unread badge handling
 
-## 10. Interview Summary
+## 10. Short interview answer
 
-Nếu phải mô tả ngắn gọn:
+If you need to describe the backend quickly:
 
-> Đây là một backend Spring Boot đa tenant cho support desk.  
-> Auth dùng JWT + refresh cookie.  
-> Mọi business data đều bị khóa theo organization/workspace/membership.  
-> Workflow item có audit event, comment và attachment riêng.  
-> Knowledge, AI, Notification đã có shell để mở rộng.
+> This is a multi-tenant Spring Boot backend for a support desk.  
+> Auth uses JWT plus a refresh cookie.  
+> All business data is locked by organization, workspace, and membership scope.  
+> Workflow items have audit events, comments, and attachments.  
+> Knowledge, AI, and notification already have shells for future expansion.
 

@@ -1,32 +1,32 @@
 # Project Overview
 
-`customer-support` là backend Java Spring cho một support desk đa tenant.
-Mục tiêu của hệ thống là cho phép một company quản lý:
+`customer-support` is a Java Spring backend for a multi-tenant support desk.
+The system lets a company manage:
 
-- user đăng nhập bằng JWT
-- organization / workspace theo tenant context
+- user authentication with JWT
+- organizations and workspaces as tenant context
 - customer requests
 - comments
 - attachments
-- team members / roles
-- knowledge base
+- team members and roles
+- knowledge base documents
 - notifications
-- AI assistant có giới hạn theo tenant
+- an AI assistant with tenant restrictions
 
 ## 1. One-line summary
 
-Một hệ thống support desk cho company, nơi mọi request, comment, file đính kèm, knowledge và assistant action đều phải đi qua tenant scope rõ ràng.
+A support desk system where every request, comment, attachment, knowledge source, and assistant action must stay within a clear tenant scope.
 
 ## 2. Business problem
 
-Hệ thống này giải quyết bài toán:
+The system solves the following problems:
 
-- team support có nhiều request cùng lúc
-- dữ liệu phải tách theo company / workspace
-- nhiều người cùng làm việc trên một request
-- cần audit trail để biết ai đổi gì
-- cần knowledge base để AI trả lời theo tài liệu nội bộ
-- cần notification để team không bỏ sót sự kiện quan trọng
+- support teams handle many requests at once
+- data must be isolated by company and workspace
+- multiple people collaborate on one request
+- an audit trail is needed to see who changed what
+- a knowledge base is needed so AI can answer from internal documentation
+- notifications are needed so teams do not miss important events
 
 ## 3. Core domain model
 
@@ -63,47 +63,47 @@ Hệ thống này giải quyết bài toán:
 ## 4. Main user roles
 
 - **Owner**: full company control, team management, knowledge management
-- **Admin**: manage team and workflow inside tenant scope
-- **Member**: work on requests, comment, upload attachments
+- **Admin**: manages team and workflow inside tenant scope
+- **Member**: works on requests, comments, and attachments
 - **Viewer**: read-only
 
 ## 5. Main business flows
 
 ### Auth flow
 
-1. user register/login
-2. backend returns access token
-3. backend sets refresh token cookie
-4. frontend uses access token on API calls
-5. refresh happens when access token expires
+1. User registers or logs in
+2. Backend returns an access token
+3. Backend sets a refresh token cookie
+4. Frontend uses the access token for API calls
+5. Refresh happens when the access token expires
 
 ### Organization flow
 
-1. owner creates organization
-2. system creates default workspace
-3. system creates owner membership
-4. team starts working inside that org
+1. Owner creates an organization
+2. The system creates the default workspace
+3. The system creates the owner membership
+4. The team starts working inside that organization
 
 ### Request flow
 
-1. member/admin/owner creates a workflow item
-2. request belongs to organization and workspace
-3. other users comment, attach files, update status
-4. every change can be recorded in workflow events
+1. Member, admin, or owner creates a workflow item
+2. The request belongs to the organization and workspace
+3. Other users comment, attach files, and update status
+4. Every change can be recorded in workflow events
 
 ### Knowledge flow
 
-1. owner/admin uploads markdown
-2. document is stored and chunked
-3. chunks are indexed for retrieval
-4. assistant can cite the matching source
+1. Owner or admin uploads markdown
+2. The document is chunked
+3. The chunks are indexed for retrieval
+4. The assistant can cite the matching source
 
 ### Assistant flow
 
-1. user opens assistant panel
-2. assistant reads tenant-scoped data only
-3. assistant can call approved tools
-4. assistant returns answer, action, or citation
+1. User opens the assistant panel
+2. The assistant reads tenant-scoped data only
+3. The assistant can call approved tools
+4. The assistant returns an answer, an action, or a citation
 
 ## 6. Architecture at a glance
 
@@ -124,9 +124,9 @@ This project demonstrates:
 - authentication and session management
 - multi-tenant authorization
 - backend domain modeling
-- request lifecycle + audit trail
-- file upload/download
-- knowledge base / retrieval design
+- request lifecycle and audit trail
+- file upload and download
+- knowledge base and retrieval design
 - AI tool calling with guardrails
 - Docker-based local deployment
 - observability readiness
@@ -151,13 +151,13 @@ src/main/java/com/nhat/workflowhub
 
 ## 9. How the docs fit together
 
-- [`database_schema.md`](./database_schema.md) explains the database table-by-table
+- [`database_schema.md`](./database_schema.md) explains the database table by table
 - [`api_design.md`](./api_design.md) explains each endpoint and payload
-- [`frontend_architecture.md`](./frontend_architecture.md) explains the intended FE shell and UI state
+- [`frontend_architecture.md`](./frontend_architecture.md) explains the intended frontend shell and UI state
 - [`deployment.md`](./deployment.md) explains Docker, DB, storage, and production direction
 
 ## 10. Current status
 
 The backend foundation is already implemented.
-The knowledge/AI/notification parts are currently the next phase and still need fuller service-level implementation.
+The knowledge, AI, and notification parts are the next phase and still need fuller service-level implementation.
 

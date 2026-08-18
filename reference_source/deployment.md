@@ -1,18 +1,18 @@
 # Deployment
 
-Tài liệu này mô tả cách `customer-support` được chạy và deploy trong trạng thái hiện tại của repo.
+This document explains how `customer-support` is currently run and deployed in this repo.
 
-## 1. Deployment scope hiện tại
+## 1. Current deployment scope
 
-Repo JavaSpring này hiện đã có:
+The Java Spring repo currently has:
 
-- backend Spring Boot
+- backend Spring Boot application
 - PostgreSQL
-- local filesystem storage cho attachments
-- Dockerfile để build app image
-- `docker-compose.yml` để chạy local full stack
+- local filesystem storage for attachments
+- Dockerfile to build the app image
+- `docker-compose.yml` to run the local full stack
 
-Hiện tại **chưa có** Terraform, Kubernetes, GCP infra code hay production deployment script trong repo này.
+There is currently **no** Terraform, Kubernetes, GCP infra code, or production deployment script in this repo.
 
 ## 2. Source of truth
 
@@ -24,7 +24,7 @@ Hiện tại **chưa có** Terraform, Kubernetes, GCP infra code hay production 
 
 ## 3. Local deployment architecture
 
-Local deployment hiện tại chạy bằng Docker Compose:
+Local deployment currently runs with Docker Compose:
 
 ```mermaid
 flowchart LR
@@ -44,7 +44,7 @@ flowchart LR
 
 #### `app`
 
-- built from project `Dockerfile`
+- built from the project `Dockerfile`
 - exposes port `8080`
 - reads runtime config from `.env`
 - waits for PostgreSQL healthcheck before starting
@@ -66,8 +66,8 @@ flowchart LR
 ### Why two stages
 
 - smaller runtime image
-- no build tools in production image
-- cleaner separation between build and run
+- no build tools in the runtime image
+- clear separation between build and run
 
 ## 5. Runtime configuration
 
@@ -118,10 +118,10 @@ docker compose up --build
 
 1. Docker builds the Java app image
 2. PostgreSQL container starts
-3. Healthcheck waits until DB is ready
+3. Healthcheck waits until the database is ready
 4. Spring Boot app starts
 5. Flyway runs migrations
-6. App serves API on `http://localhost:8080`
+6. The app serves the API on `http://localhost:8080`
 
 ## 7. Database deployment strategy
 
@@ -129,31 +129,31 @@ docker compose up --build
 
 - PostgreSQL is the primary database
 - schema is managed by Flyway
-- application uses `ddl-auto: validate`
+- the application uses `ddl-auto: validate`
 
 That means:
 
 - tables are not created by Hibernate
 - schema must match migrations
-- app startup fails if entity schema and DB schema drift
+- the app fails to start if entity schema and DB schema drift
 
 ### Why this is good
 
 - schema changes are versioned
-- easier to review migration history
-- better for interview and production readiness
+- migration history is easy to review
+- better for interviews and production readiness
 
 ## 8. Attachment storage strategy
 
 ### Current behavior
 
-- file bytes are stored in local filesystem
+- file bytes are stored in the local filesystem
 - metadata is stored in PostgreSQL
 - default local path: `./data/attachments`
 
 ### Code path
 
-- upload/download/delete handled under attachment module
+- upload, download, and delete are handled under the attachment module
 - attachment metadata table: `attachments`
 
 ### Deployment implication
@@ -180,8 +180,8 @@ Recommended future production target:
 Deployment should expose:
 
 - app health
-- DB connectivity
-- metrics for Grafana / Prometheus
+- database connectivity
+- metrics for Grafana and Prometheus
 
 ## 10. Production deployment direction
 
@@ -202,7 +202,7 @@ flowchart LR
 - HTTPS reverse proxy or load balancer
 - managed PostgreSQL
 - object storage for attachments
-- secrets manager for JWT/database credentials
+- secrets manager for JWT and database credentials
 - observability stack
 
 ### Future security notes
@@ -211,7 +211,7 @@ flowchart LR
 - `COOKIE_DOMAIN` should match the real domain
 - environment secrets should not live in git
 
-## 11. What is missing from repo today
+## 11. What is missing from the repo today
 
 Not yet present in this repo:
 
@@ -224,18 +224,19 @@ Not yet present in this repo:
 
 ## 12. Interview explanation
 
-If someone asks “how do you deploy it?”, the clean answer is:
+If someone asks "how do you deploy it?", the clean answer is:
 
 1. The app is containerized with a multi-stage Dockerfile.
 2. Docker Compose starts PostgreSQL and the Spring Boot app locally.
 3. Flyway manages schema migrations on startup.
-4. Attachments are stored on local disk during development.
+4. Attachments are stored on disk during development.
 5. Actuator exposes health and metrics for observability.
-6. Production would replace local disk with object storage and use managed DB + HTTPS + secrets management.
+6. Production would replace local disk with object storage and use managed DB, HTTPS, and secrets management.
 
 ## 13. Where to continue next
 
-- add real CI/CD pipeline
+- add a real CI/CD pipeline
 - add Terraform or cloud infra docs
 - add object storage integration docs
 - add frontend deployment notes
+

@@ -1,6 +1,6 @@
 # API Design
 
-Tài liệu này mô tả kiến trúc API hiện tại của `customer-support`, route nào ở đâu trong code, request/response shape ra sao, và API đó đang làm việc với bảng nào.
+This document describes the current API architecture of `customer-support`, where each route lives in code, what the request and response shapes look like, and which tables each API touches.
 
 ## Source of truth
 
@@ -642,4 +642,3 @@ When someone asks “how does the API work?”, the short answer is:
 - `reference_source/business_flow_and_api.md` if you want one combined story
 - `reference_source/frontend_architecture.md` if you want FE behavior / routing / state
 - `reference_source/deployment.md` if you want Docker / GCP / Terraform explanation
-
