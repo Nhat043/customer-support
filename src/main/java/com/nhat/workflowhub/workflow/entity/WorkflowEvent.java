@@ -1,18 +1,17 @@
-package com.nhat.workflowhub.comment.entity;
+package com.nhat.workflowhub.workflow.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
-@Table(name = "comments")
-public class Comment {
+@Table(name = "workflow_events")
+public class WorkflowEvent {
 
   @Id
   private UUID id;
@@ -26,33 +25,29 @@ public class Comment {
   @Column(name = "workspace_id", nullable = false)
   private UUID workspaceId;
 
-  @Column(name = "user_id", nullable = false)
-  private UUID userId;
+  @Column(name = "event_type", nullable = false)
+  private String eventType;
 
-  @Column(nullable = false, columnDefinition = "text")
-  private String body;
+  @Column(name = "old_value", columnDefinition = "text")
+  private String oldValue;
+
+  @Column(name = "new_value", columnDefinition = "text")
+  private String newValue;
+
+  @Column(name = "actor_user_id", nullable = false)
+  private UUID actorUserId;
 
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
-
-  @Column(name = "updated_at", nullable = false)
-  private OffsetDateTime updatedAt;
 
   @PrePersist
   void onCreate() {
     if (id == null) {
       id = UUID.randomUUID();
     }
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
     if (createdAt == null) {
-      createdAt = now;
+      createdAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
-    updatedAt = now;
-  }
-
-  @PreUpdate
-  void onUpdate() {
-    updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
   }
 
   public UUID getId() {
@@ -87,20 +82,36 @@ public class Comment {
     this.workspaceId = workspaceId;
   }
 
-  public UUID getUserId() {
-    return userId;
+  public String getEventType() {
+    return eventType;
   }
 
-  public void setUserId(UUID userId) {
-    this.userId = userId;
+  public void setEventType(String eventType) {
+    this.eventType = eventType;
   }
 
-  public String getBody() {
-    return body;
+  public String getOldValue() {
+    return oldValue;
   }
 
-  public void setBody(String body) {
-    this.body = body;
+  public void setOldValue(String oldValue) {
+    this.oldValue = oldValue;
+  }
+
+  public String getNewValue() {
+    return newValue;
+  }
+
+  public void setNewValue(String newValue) {
+    this.newValue = newValue;
+  }
+
+  public UUID getActorUserId() {
+    return actorUserId;
+  }
+
+  public void setActorUserId(UUID actorUserId) {
+    this.actorUserId = actorUserId;
   }
 
   public OffsetDateTime getCreatedAt() {
@@ -109,13 +120,5 @@ public class Comment {
 
   public void setCreatedAt(OffsetDateTime createdAt) {
     this.createdAt = createdAt;
-  }
-
-  public OffsetDateTime getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public void setUpdatedAt(OffsetDateTime updatedAt) {
-    this.updatedAt = updatedAt;
   }
 }

@@ -1,6 +1,10 @@
 spring:
   application:
     name: customer-support-hub
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:workflow_hub;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
@@ -17,6 +21,8 @@ spring:
     enabled: true
 
 app:
+  attachments:
+    dir: ${ATTACHMENTS_DIR:./data/attachments}
   auth:
     jwt:
       issuer: customer-support-hub
