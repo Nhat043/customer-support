@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-customer_support_hub_local}
+      POSTGRES_USER: ${POSTGRES_USER:-customer_support_hub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-customer_support_hub}
+    ports:
+      - "5432:5432"
+    volumes:
+      - workflow_hub_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-customer_support_hub} -d ${POSTGRES_DB:-customer_support_hub_local}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-customer_support_hub_local}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-customer_support_hub}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-customer_support_hub}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+    ports:
+      - "8080:8080"
+
+volumes:
+  workflow_hub_postgres:
