@@ -8,6 +8,7 @@ import com.nhat.workflowhub.membership.entity.Membership;
 import com.nhat.workflowhub.membership.repository.MembershipRepository;
 import com.nhat.workflowhub.organization.entity.Organization;
 import com.nhat.workflowhub.organization.service.OrganizationService;
+import com.nhat.workflowhub.notification.service.NotificationService;
 import com.nhat.workflowhub.workspace.entity.Workspace;
 import com.nhat.workflowhub.workspace.repository.WorkspaceRepository;
 import com.nhat.workflowhub.workflow.dto.CreateWorkflowItemRequest;
@@ -39,6 +40,7 @@ public class WorkflowService {
   private final WorkflowItemRepository workflowItemRepository;
   private final WorkflowEventRepository workflowEventRepository;
   private final UserAccountRepository userAccountRepository;
+  private final NotificationService notificationService;
   private final ObjectMapper objectMapper;
 
   public WorkflowService(
@@ -48,6 +50,7 @@ public class WorkflowService {
       WorkflowItemRepository workflowItemRepository,
       WorkflowEventRepository workflowEventRepository,
       UserAccountRepository userAccountRepository,
+      NotificationService notificationService,
       ObjectMapper objectMapper
   ) {
     this.organizationService = organizationService;
@@ -56,6 +59,7 @@ public class WorkflowService {
     this.workflowItemRepository = workflowItemRepository;
     this.workflowEventRepository = workflowEventRepository;
     this.userAccountRepository = userAccountRepository;
+    this.notificationService = notificationService;
     this.objectMapper = objectMapper;
   }
 
@@ -101,6 +105,15 @@ public class WorkflowService {
     validateAssignee(organization.getId(), item.getAssigneeUserId());
     workflowItemRepository.save(item);
     saveEvent(item, currentUserId, "CREATED", null, snapshot(item));
+    notificationService.notifyWorkflowItemEvent(
+        organization,
+        item.getWorkspaceId(),
+        item.getId(),
+        currentUserId,
+        "WORKFLOW_ITEM_CREATED",
+        "New request: " + item.getTitle(),
+        "A new workflow item was created in " + item.getWorkspaceId() + "."
+    );
     return toResponse(item);
   }
 
@@ -139,6 +152,15 @@ public class WorkflowService {
 
     workflowItemRepository.save(item);
     saveEvent(item, currentUserId, "UPDATED", before, snapshot(item));
+    notificationService.notifyWorkflowItemEvent(
+        organization,
+        item.getWorkspaceId(),
+        item.getId(),
+        currentUserId,
+        "WORKFLOW_ITEM_UPDATED",
+        "Request updated: " + item.getTitle(),
+        "The request is now " + item.getStatus() + "."
+    );
     return toResponse(item);
   }
 
@@ -149,6 +171,15 @@ public class WorkflowService {
     WorkflowItem item = workflowItemRepository.findByIdAndOrganizationId(workflowItemId, organization.getId())
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Workflow item not found"));
     saveEvent(item, currentUserId, "DELETED", snapshot(item), null);
+    notificationService.notifyWorkflowItemEvent(
+        organization,
+        item.getWorkspaceId(),
+        item.getId(),
+        currentUserId,
+        "WORKFLOW_ITEM_DELETED",
+        "Request deleted: " + item.getTitle(),
+        "A workflow item was deleted from the workspace."
+    );
     workflowItemRepository.delete(item);
   }
 

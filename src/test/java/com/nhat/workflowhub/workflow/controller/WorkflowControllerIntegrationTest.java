@@ -14,6 +14,7 @@ import com.nhat.workflowhub.auth.entity.UserStatus;
 import com.nhat.workflowhub.auth.security.JwtService;
 import com.nhat.workflowhub.auth.repository.UserAccountRepository;
 import com.nhat.workflowhub.membership.repository.MembershipRepository;
+import com.nhat.workflowhub.notification.service.NotificationService;
 import com.nhat.workflowhub.organization.entity.Organization;
 import com.nhat.workflowhub.organization.service.OrganizationService;
 import com.nhat.workflowhub.workflow.entity.WorkflowPriority;
@@ -57,6 +58,8 @@ class WorkflowControllerIntegrationTest {
   private WorkflowItemRepository workflowItemRepository;
   @MockBean
   private WorkflowEventRepository workflowEventRepository;
+  @MockBean
+  private NotificationService notificationService;
 
   @Test
   void createWorkflowItem_returnsCreatedWorkflowItem() throws Exception {
@@ -184,6 +187,62 @@ class WorkflowControllerIntegrationTest {
             .with(csrf())
             .header("Authorization", "Bearer valid-token"))
         .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void createWorkflowItem_returnsForbiddenForViewer() throws Exception {
+    UUID userId = UUID.randomUUID();
+    UUID ownerId = UUID.randomUUID();
+    UUID organizationId = UUID.randomUUID();
+
+    UserAccount user = activeUser(userId);
+    Organization organization = organization(ownerId, organizationId);
+    com.nhat.workflowhub.membership.entity.Membership viewerMembership = new com.nhat.workflowhub.membership.entity.Membership();
+    viewerMembership.setId(UUID.randomUUID());
+    viewerMembership.setOrganizationId(organizationId);
+    viewerMembership.setWorkspaceId(null);
+    viewerMembership.setUserId(userId);
+    viewerMembership.setRole(com.nhat.workflowhub.auth.entity.UserRole.VIEWER);
+    viewerMembership.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+    viewerMembership.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+
+    when(jwtService.isValidAccessToken("valid-token")).thenReturn(true);
+    when(jwtService.extractUserId("valid-token")).thenReturn(userId);
+    when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(organizationService.requireAccessibleOrganization("acme", userId)).thenReturn(organization);
+    when(membershipRepository.findAllByOrganizationIdAndUserId(organizationId, userId)).thenReturn(List.of(viewerMembership));
+
+    mockMvc.perform(post("/api/organizations/acme/workflow-items")
+            .with(csrf())
+            .header("Authorization", "Bearer valid-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "title": "Payment is broken",
+                  "description": "Customer cannot pay"
+                }
+                """))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void getWorkflowItem_returnsNotFoundForMissingItem() throws Exception {
+    UUID userId = UUID.randomUUID();
+    UUID organizationId = UUID.randomUUID();
+    UUID workflowItemId = UUID.randomUUID();
+
+    UserAccount user = activeUser(userId);
+    Organization organization = organization(userId, organizationId);
+
+    when(jwtService.isValidAccessToken("valid-token")).thenReturn(true);
+    when(jwtService.extractUserId("valid-token")).thenReturn(userId);
+    when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(organizationService.requireAccessibleOrganization("acme", userId)).thenReturn(organization);
+    when(workflowItemRepository.findByIdAndOrganizationId(workflowItemId, organizationId)).thenReturn(Optional.empty());
+
+    mockMvc.perform(get("/api/organizations/acme/workflow-items/{workflowItemId}", workflowItemId)
+            .header("Authorization", "Bearer valid-token"))
+        .andExpect(status().isNotFound());
   }
 
   @Test

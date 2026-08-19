@@ -9,6 +9,7 @@ import com.nhat.workflowhub.comment.entity.Comment;
 import com.nhat.workflowhub.comment.repository.CommentRepository;
 import com.nhat.workflowhub.membership.entity.Membership;
 import com.nhat.workflowhub.membership.repository.MembershipRepository;
+import com.nhat.workflowhub.notification.service.NotificationService;
 import com.nhat.workflowhub.organization.entity.Organization;
 import com.nhat.workflowhub.organization.service.OrganizationService;
 import com.nhat.workflowhub.workflow.entity.WorkflowItem;
@@ -30,19 +31,22 @@ public class CommentService {
   private final MembershipRepository membershipRepository;
   private final WorkflowItemRepository workflowItemRepository;
   private final CommentRepository commentRepository;
+  private final NotificationService notificationService;
 
   public CommentService(
       OrganizationService organizationService,
       WorkspaceRepository workspaceRepository,
       MembershipRepository membershipRepository,
       WorkflowItemRepository workflowItemRepository,
-      CommentRepository commentRepository
+      CommentRepository commentRepository,
+      NotificationService notificationService
   ) {
     this.organizationService = organizationService;
     this.workspaceRepository = workspaceRepository;
     this.membershipRepository = membershipRepository;
     this.workflowItemRepository = workflowItemRepository;
     this.commentRepository = commentRepository;
+    this.notificationService = notificationService;
   }
 
   @Transactional(readOnly = true)
@@ -65,6 +69,15 @@ public class CommentService {
     comment.setUserId(currentUserId);
     comment.setBody(request.body().trim());
     commentRepository.save(comment);
+    notificationService.notifyCommentEvent(
+        context.organization(),
+        context.workflowItem().getWorkspaceId(),
+        comment.getId(),
+        currentUserId,
+        "COMMENT_ADDED",
+        "New comment on " + context.workflowItem().getTitle(),
+        comment.getBody()
+    );
     return toResponse(comment);
   }
 
@@ -77,6 +90,15 @@ public class CommentService {
     ensureSameOrganization(comment, context.organization().getId());
     comment.setBody(request.body().trim());
     commentRepository.save(comment);
+    notificationService.notifyCommentEvent(
+        context.organization(),
+        context.workflowItem().getWorkspaceId(),
+        comment.getId(),
+        currentUserId,
+        "COMMENT_UPDATED",
+        "Comment updated on " + context.workflowItem().getTitle(),
+        comment.getBody()
+    );
     return toResponse(comment);
   }
 
@@ -87,6 +109,15 @@ public class CommentService {
     Comment comment = commentRepository.findByIdAndWorkflowItemId(commentId, workflowItemId)
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Comment not found"));
     ensureSameOrganization(comment, context.organization().getId());
+    notificationService.notifyCommentEvent(
+        context.organization(),
+        context.workflowItem().getWorkspaceId(),
+        comment.getId(),
+        currentUserId,
+        "COMMENT_DELETED",
+        "Comment deleted from " + context.workflowItem().getTitle(),
+        comment.getBody()
+    );
     commentRepository.delete(comment);
   }
 

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhat.workflowhub.auth.repository.UserAccountRepository;
 import com.nhat.workflowhub.membership.repository.MembershipRepository;
+import com.nhat.workflowhub.notification.service.NotificationService;
 import com.nhat.workflowhub.organization.entity.Organization;
 import com.nhat.workflowhub.organization.service.OrganizationService;
 import com.nhat.workflowhub.workflow.dto.UpdateWorkflowItemRequest;
@@ -43,6 +44,8 @@ class WorkflowServiceTest {
   private WorkflowEventRepository workflowEventRepository;
   @Mock
   private UserAccountRepository userAccountRepository;
+  @Mock
+  private NotificationService notificationService;
   @Mock
   private ObjectMapper objectMapper;
 

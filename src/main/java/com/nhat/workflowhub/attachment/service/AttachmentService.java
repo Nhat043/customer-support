@@ -7,6 +7,7 @@ import com.nhat.workflowhub.attachment.repository.AttachmentRepository;
 import com.nhat.workflowhub.common.exception.ApiException;
 import com.nhat.workflowhub.membership.entity.Membership;
 import com.nhat.workflowhub.membership.repository.MembershipRepository;
+import com.nhat.workflowhub.notification.service.NotificationService;
 import com.nhat.workflowhub.organization.entity.Organization;
 import com.nhat.workflowhub.organization.service.OrganizationService;
 import com.nhat.workflowhub.workflow.entity.WorkflowItem;
@@ -44,6 +45,7 @@ public class AttachmentService {
   private final MembershipRepository membershipRepository;
   private final WorkflowItemRepository workflowItemRepository;
   private final AttachmentRepository attachmentRepository;
+  private final NotificationService notificationService;
   private final Path storageRoot;
 
   public AttachmentService(
@@ -52,6 +54,7 @@ public class AttachmentService {
       MembershipRepository membershipRepository,
       WorkflowItemRepository workflowItemRepository,
       AttachmentRepository attachmentRepository,
+      NotificationService notificationService,
       @Value("${app.attachments.dir:./data/attachments}") String storageDir
   ) {
     this.organizationService = organizationService;
@@ -59,6 +62,7 @@ public class AttachmentService {
     this.membershipRepository = membershipRepository;
     this.workflowItemRepository = workflowItemRepository;
     this.attachmentRepository = attachmentRepository;
+    this.notificationService = notificationService;
     this.storageRoot = Path.of(storageDir);
   }
 
@@ -101,6 +105,15 @@ public class AttachmentService {
     attachment.setStorageKey(storageKey.replace('\\', '/'));
     attachment.setChecksum(checksum(file));
     attachmentRepository.save(attachment);
+    notificationService.notifyAttachmentEvent(
+        context.organization(),
+        context.workflowItem().getWorkspaceId(),
+        attachment.getId(),
+        currentUserId,
+        "ATTACHMENT_UPLOADED",
+        "Attachment added to " + context.workflowItem().getTitle(),
+        attachment.getFileName()
+    );
     return toResponse(attachment);
   }
 
@@ -127,6 +140,15 @@ public class AttachmentService {
     Attachment attachment = requireActiveAttachment(context.workflowItem().getId(), attachmentId);
     attachment.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
     attachmentRepository.save(attachment);
+    notificationService.notifyAttachmentEvent(
+        context.organization(),
+        context.workflowItem().getWorkspaceId(),
+        attachment.getId(),
+        currentUserId,
+        "ATTACHMENT_DELETED",
+        "Attachment removed from " + context.workflowItem().getTitle(),
+        attachment.getFileName()
+    );
 
     Path path = storageRoot.resolve(attachment.getStorageKey());
     try {
