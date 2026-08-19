@@ -24,14 +24,13 @@ This folder is the interview-ready reference pack for the Java Spring version of
 
 Use these docs to answer questions like:
 
-- system này làm gì
-- data model ra sao
-- API nào phục vụ flow nào
-- frontend nên tổ chức thế nào
-- deploy local / production đi theo hướng nào
+- what the system does
+- what the data model looks like
+- which API supports which flow
+- how the frontend should be organized
+- how local and production deployment should work
 
 ## Status
 
 These docs are written to match the current codebase as closely as possible.
 When the backend evolves, update the matching doc in the same folder.
-

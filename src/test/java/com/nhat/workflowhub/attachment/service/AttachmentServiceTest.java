@@ -10,6 +10,7 @@ import com.nhat.workflowhub.attachment.repository.AttachmentRepository;
 import com.nhat.workflowhub.auth.entity.UserRole;
 import com.nhat.workflowhub.membership.entity.Membership;
 import com.nhat.workflowhub.membership.repository.MembershipRepository;
+import com.nhat.workflowhub.notification.service.NotificationService;
 import com.nhat.workflowhub.organization.entity.Organization;
 import com.nhat.workflowhub.organization.service.OrganizationService;
 import com.nhat.workflowhub.workflow.entity.WorkflowItem;
@@ -42,6 +43,8 @@ class AttachmentServiceTest {
   private WorkflowItemRepository workflowItemRepository;
   @Mock
   private AttachmentRepository attachmentRepository;
+  @Mock
+  private NotificationService notificationService;
 
   @TempDir
   Path tempDir;
@@ -99,6 +102,7 @@ class AttachmentServiceTest {
         membershipRepository,
         workflowItemRepository,
         attachmentRepository,
+        notificationService,
         tempDir.toString()
     );
 

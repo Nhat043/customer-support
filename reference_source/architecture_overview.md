@@ -2,80 +2,80 @@
 
 ## 1. Purpose
 
-Customer Support Hub là một backend Spring Boot cho bài toán support desk đa tenant.
-Mục tiêu của hệ thống là:
+Customer Support Hub is a Spring Boot backend for a multi-tenant support desk.
+The system is designed to:
 
-- xác thực người dùng bằng JWT
-- tách dữ liệu theo `organization` và `workspace`
-- quản lý customer requests, comments, attachments
-- có nền cho knowledge base, AI assistant, notifications và observability
+- authenticate users with JWT
+- isolate data by `organization` and `workspace`
+- manage customer requests, comments, and attachments
+- provide a foundation for a knowledge base, AI assistant, notifications, and observability
 
-Repo này đang đóng vai trò backend chính cho app JavaSpring.
+This repository is the main backend for the JavaSpring version of the project.
 
 ## 2. Tech Stack
 
 ### Backend
 
-- Java 21
+- Java 17
 - Spring Boot 3.3.x
 - Spring Web
 - Spring Security
 - Spring Data JPA
 - Flyway
 - PostgreSQL
-- H2 cho local/test
+- H2 for local and test runs
 
-### Support libraries
+### Supporting libraries
 
-- JJWT cho access token
-- Spring Validation cho validate request
-- Spring Actuator cho health/metrics
-- WebSocket config đã có sẵn cho các flow realtime về sau
+- JJWT for access tokens
+- Spring Validation for request validation
+- Spring Actuator for health and metrics
+- WebSocket configuration is already in place for future realtime flows
 
-### Storage and infra
+### Storage and infrastructure
 
-- PostgreSQL: lưu data chính
-- Local filesystem: lưu attachment khi chạy local
-- Redis: đã có config nền cho các flow cần cache/rate limit
+- PostgreSQL stores the primary application data
+- Local filesystem stores attachments during local development
+- Redis is available as a base integration for caching and rate limiting flows
 
-## 3. High-level Layers
+## 3. High-Level Layers
 
-Code được chia theo từng domain:
+The code is organized by domain:
 
-- `auth`: register/login/refresh/logout/me
-- `organization`: company/org management
-- `workspace`: workspace within an org
+- `auth`: register, login, refresh, logout, and me
+- `organization`: company and organization management
+- `workspace`: workspace management inside an organization
 - `membership`: role assignment and team management
 - `workflow`: customer request CRUD and audit events
 - `comment`: request comments
-- `attachment`: request file upload/download/delete
-- `knowledge`: placeholder module cho knowledge base
-- `notification`: placeholder module cho notifications
-- `ai`: placeholder module cho AI assistant
-- `config`: security, OpenAPI, JPA auditing, Redis, WebSocket
-- `common`: exception, response, validator, util
+- `attachment`: request file upload, download, and delete
+- `knowledge`: placeholder module for the knowledge base
+- `notification`: placeholder module for notifications
+- `ai`: placeholder module for the AI assistant
+- `config`: security, OpenAPI, JPA auditing, Redis, and WebSocket config
+- `common`: exceptions, responses, validators, and utilities
 
 ### Why this structure
 
-Mỗi domain giữ đủ controller/service/repository/entity/dto ngay trong package của nó.
-Điều này giúp:
+Each domain keeps its own controller, service, repository, entity, and DTO classes.
+This makes it easier to:
 
-- dễ tìm code theo feature
-- dễ tách permission theo tenant
-- dễ viết test theo từng domain
-- tránh “god module” chứa mọi thứ
+- find code by feature
+- enforce tenant permissions per domain
+- write tests per feature
+- avoid a giant "god module" with everything mixed together
 
 ## 4. Request Pipeline
 
-Luồng request chung:
+The typical request flow is:
 
-1. Client gọi API
-2. `JwtAuthenticationFilter` đọc `Authorization: Bearer <token>`
-3. Token hợp lệ thì tạo `AuthenticatedUser`
-4. Controller lấy `currentUserId` từ `Authentication`
-5. Service kiểm tra tenant/role rồi xử lý business
-6. Repository đọc/ghi database
-7. Response trả về controller
+1. The client calls the API
+2. `JwtAuthenticationFilter` reads `Authorization: Bearer <token>`
+3. If the token is valid, the app creates an `AuthenticatedUser`
+4. The controller reads `currentUserId` from `Authentication`
+5. The service checks tenant and role permissions before applying business logic
+6. The repository reads or writes the database
+7. The controller returns the response
 
 ```mermaid
 flowchart LR
@@ -100,20 +100,20 @@ flowchart LR
 
 ### Token strategy
 
-- access token: nằm trong `Authorization` header
-- refresh token: nằm trong HTTP-only cookie
-- logout: revoke refresh session và clear cookie
+- access token goes in the `Authorization` header
+- refresh token goes in an HTTP-only cookie
+- logout revokes the refresh session and clears the cookie
 
 ### Why this design
 
-- access token ngắn hạn để giảm rủi ro
-- refresh cookie HTTP-only để frontend không phải tự quản lý refresh token bằng JS
-- dễ support SPA và giảm exposure của token trên browser
+- access tokens are short-lived, which lowers risk
+- the refresh cookie is HTTP-only, so the frontend does not need to store the refresh token in JavaScript
+- this fits SPA flows and reduces token exposure in the browser
 
 ## 6. Tenant Model
 
-Tenant scope của hệ thống không chỉ là `user`.
-Scope chính là:
+The tenant scope is not just the `user`.
+The main scope is:
 
 - `organization`
 - `workspace`
@@ -128,21 +128,21 @@ Scope chính là:
 
 ### Isolation rule
 
-Mọi resource business đều phải đi qua organization context.
-Service layer luôn check:
+Every business resource must flow through the organization context.
+The service layer always checks:
 
-- user có access organization hay không
-- user có role phù hợp hay không
-- resource có thuộc đúng org/workspace không
+- whether the user can access the organization
+- whether the user has the required role
+- whether the resource belongs to the right organization or workspace
 
 ### Why this matters
 
-Nếu không check ở service layer, user có thể đọc chéo tenant bằng cách đoán ID.
-Backend này chọn “server-enforced tenant isolation” thay vì chỉ dựa vào UI ẩn nút.
+Without service-layer checks, a user could guess an ID and read data from another tenant.
+This backend uses server-enforced tenant isolation instead of relying only on hidden UI controls.
 
 ## 7. Workflow Domain
 
-Workflow item là customer request.
+A workflow item is a customer request.
 
 ### Main endpoints
 
@@ -155,22 +155,22 @@ Workflow item là customer request.
 
 ### Data model
 
-- title, description
+- title and description
 - status
 - priority
 - assignee
 - due date
 - audit events
 
-### Why event table exists
+### Why the event table exists
 
-`workflow_events` giữ lịch sử trạng thái thay đổi.
-Điều này giúp:
+`workflow_events` stores the history of status changes.
+This is useful for:
 
-- audit trail
+- audit trails
 - debugging
 - future notification logic
-- future AI summaries / timeline
+- future AI summaries and timelines
 
 ## 8. Comment and Attachment Domains
 
@@ -194,85 +194,66 @@ Endpoints:
 
 ### Storage strategy
 
-- metadata: PostgreSQL
-- file content: local filesystem khi chạy local
-- later có thể đổi sang GCS / S3 style storage mà không đổi API contract nhiều
+- metadata is stored in PostgreSQL
+- file content is stored in the local filesystem during local development
+- later the backend can switch to GCS or an S3-style store without changing the API contract much
 
-## 9. Knowledge / AI / Notification Modules
+## 9. Knowledge, AI, and Notification Modules
 
 ### Knowledge
 
-`knowledge` là module cho workspace knowledge base.
-Hiện tại module này đang là placeholder để sau này:
+`knowledge` is the workspace knowledge base module.
+It is currently a placeholder for future support such as:
 
-- upload markdown
-- chunk content
-- index embeddings
-- search/citation
+- markdown upload
+- content chunking
+- embedding indexing
+- search and citation
 
 ### AI
 
-`ai` là module cho assistant/chatbot.
-Nó chuẩn bị cho:
+`ai` is the assistant/chatbot module.
+It is prepared for:
 
 - function calling
 - tool registry
 - tenant-scoped actions
-- summarization / routing / request lookup
+- summarization, routing, and request lookup
 
 ### Notification
 
-`notification` là module cho event-driven updates.
-Hướng đi tương lai:
+`notification` is the event-driven updates module.
+The future direction includes:
 
 - request updated
 - comment added
-- mention / invite / due soon
+- mention, invite, and due-soon events
 
-## 10. Configuration and Cross-cutting Concerns
+## 10. Configuration and Cross-Cutting Concerns
 
 ### Security config
 
-- stateless session
+- stateless session model
 - JWT filter
-- route whitelist cho auth/health/docs
+- route whitelist for auth, health, and docs
 
 ### OpenAPI
 
-- Swagger/OpenAPI config đã bật sẵn để khám phá API
+- Swagger / OpenAPI is enabled for API discovery
 
 ### JPA auditing
 
-- tự gắn createdAt/updatedAt ở entity
+- createdAt and updatedAt are handled automatically on entities
 
 ### Validation
 
-- DTO request dùng Bean Validation
-- giảm risk nhận payload rỗng hoặc sai format
+- DTOs use Bean Validation
+- this reduces the chance of empty or malformed payloads
 
 ## 11. Current Runtime Notes
 
-### Local
+### Local behavior
 
-- DB local dùng H2 mặc định nếu chưa set env
-- attachment local lưu vào `./data/attachments`
-- `data/` đã được ignore để không dính vào git
-
-### Production path
-
-- PostgreSQL thật
-- attachment storage có thể nâng lên GCS
-- Redis cho cache/rate limit
-- observability qua Actuator / metrics / logs / dashboard
-
-## 12. Interview Cheatsheet
-
-Nếu bị hỏi “tại sao kiến trúc này”:
-
-- package-by-domain giúp tách responsibility rõ
-- JWT stateless phù hợp API/SPA
-- refresh cookie HTTP-only giảm exposure của refresh token
-- organization/workspace/membership tạo multi-tenant isolation
-- workflow events giúp audit và future automation
-- attachment metadata tách khỏi file storage để dễ đổi storage backend
-
+- H2 is the default database when no environment variables are set
+- attachments are stored in `./data/attachments`
+- `data/` is ignored so local files do not get committed to git
