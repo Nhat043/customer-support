@@ -2,53 +2,53 @@
 
 ## One-line pitch
 
-`customer-support` là backend Java Spring cho một support desk đa tenant, nơi company quản lý request, team, knowledge, notifications, attachments, và AI assistant có tenant isolation.
+`customer-support` is a Java Spring backend for a multi-tenant support desk where companies manage requests, teams, knowledge, notifications, attachments, and an AI assistant with tenant isolation.
 
 ## What the system does
 
-- xác thực user bằng JWT + refresh cookie
-- tách dữ liệu theo organization / workspace
-- quản lý customer requests theo workflow
-- hỗ trợ comments và attachments theo request
-- quản lý team member / role
-- hỗ trợ knowledge base để AI trả lời có citation
-- chuẩn bị notification và assistant panel
+- authenticates users with JWT and a refresh cookie
+- isolates data by organization and workspace
+- manages customer requests through a workflow
+- supports comments and attachments on each request
+- manages team members and roles
+- supports a knowledge base so the AI can answer with citations
+- prepares notification and assistant panels
 
 ## Core tech
 
-- Java 21
+- Java 17
 - Spring Boot 3
 - Spring Security
 - Spring Data JPA
 - Flyway
 - PostgreSQL
-- Docker / Docker Compose
+- Docker and Docker Compose
 
 ## Important architecture ideas
 
 ### Auth
 
-- access token đi trong `Authorization`
-- refresh token đi trong HTTP-only cookie
+- access tokens are sent in the `Authorization` header
+- refresh tokens are stored in an HTTP-only cookie
 
 ### Multi-tenant
 
-- `organization` là tenant root
-- `workspace` là tenant slice
-- mọi query business đều phải check org/workspace scope
+- `organization` is the tenant root
+- `workspace` is the tenant slice
+- every business query must check org and workspace scope
 
 ### Workflow
 
-- `workflow_items` là request chính
-- `workflow_events` lưu history/audit trail
-- `comments` và `attachments` gắn vào request
+- `workflow_items` are the main requests
+- `workflow_events` store history and audit trails
+- `comments` and `attachments` belong to a request
 
-### Knowledge / AI
+### Knowledge and AI
 
-- markdown document được upload
-- document được chunk
-- chunk được index để assistant truy hồi
-- assistant chỉ được dùng tool đã cho phép
+- Markdown documents can be uploaded
+- documents are chunked
+- chunks are indexed so the assistant can retrieve them
+- the assistant can only use approved tools
 
 ## Tables to remember
 
@@ -75,25 +75,35 @@
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
-- `GET/POST /api/organizations`
-- `GET/POST /api/organizations/{orgSlug}/workspaces`
-- `GET/POST/PATCH/DELETE /api/organizations/{orgSlug}/workflow-items`
-- `GET/POST/PATCH/DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments`
-- `GET/POST/DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments`
+- `GET /api/organizations`
+- `POST /api/organizations`
+- `GET /api/organizations/{orgSlug}/workspaces`
+- `POST /api/organizations/{orgSlug}/workspaces`
+- `GET /api/organizations/{orgSlug}/workflow-items`
+- `POST /api/organizations/{orgSlug}/workflow-items`
+- `PATCH /api/organizations/{orgSlug}/workflow-items/{workflowItemId}`
+- `DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}`
+- `GET /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments`
+- `POST /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments`
+- `PATCH /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments/{commentId}`
+- `DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/comments/{commentId}`
+- `GET /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments`
+- `POST /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments`
+- `GET /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments/{attachmentId}/download`
+- `DELETE /api/organizations/{orgSlug}/workflow-items/{workflowItemId}/attachments/{attachmentId}`
 
 ## Deployment summary
 
-- local run bằng Docker Compose
-- PostgreSQL là DB chính
-- attachments lưu local filesystem trong dev
-- Flyway quản lý schema
-- production nên dùng managed DB + object storage + HTTPS + secrets manager
+- local runs use Docker Compose
+- PostgreSQL is the primary database
+- attachments are stored on the local filesystem in development
+- Flyway manages schema changes
+- production should use a managed database, object storage, HTTPS, and a secrets manager
 
-## Folder docs
+## Docs folder
 
 - [`project_overview.md`](./project_overview.md)
 - [`database_schema.md`](./database_schema.md)
 - [`api_design.md`](./api_design.md)
 - [`frontend_architecture.md`](./frontend_architecture.md)
 - [`deployment.md`](./deployment.md)
-

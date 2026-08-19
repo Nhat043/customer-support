@@ -1,10 +1,10 @@
 # Database Schema
 
-Tài liệu này mô tả schema PostgreSQL hiện tại của `customer-support` và chỉ rõ file code nào đang map vào từng bảng.
+This document describes the current PostgreSQL schema for `customer-support` and shows which code files map to each table.
 
 ## Source of truth
 
-- Schema gốc: [`src/main/resources/db/migration/V1__baseline.sql`](../src/main/resources/db/migration/V1__baseline.sql)
+- Baseline schema: [`src/main/resources/db/migration/V1__baseline.sql`](../src/main/resources/db/migration/V1__baseline.sql)
 - JPA entity:
   - [`src/main/java/com/nhat/workflowhub/auth/entity/UserAccount.java`](../src/main/java/com/nhat/workflowhub/auth/entity/UserAccount.java)
   - [`src/main/java/com/nhat/workflowhub/auth/entity/RefreshSession.java`](../src/main/java/com/nhat/workflowhub/auth/entity/RefreshSession.java)

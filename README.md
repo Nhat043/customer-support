@@ -14,6 +14,12 @@ This is the Java Spring version of the same customer support workflow domain use
 
 ## How To Run Later
 
+Prerequisites:
+
+- JDK 17
+- Maven 3.9+
+- `JAVA_HOME` must point to a JDK, not a JRE
+
 ```bash
 mvn spring-boot:run
 ```
